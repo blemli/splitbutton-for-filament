@@ -43,8 +43,10 @@ SplitButton::make([CreateAction::make(), Action::make('import')])   // first act
     ->filterUnauthorized();      // … drop unauthorized entries instead of disabling them
 ```
 
+## Limits
+
 <details>
-<summary><h2>Limits</h2></summary>
+<summary>What it can't do</summary>
 
 - **Can't use it in field actions** (`->suffixAction()`, `->hintAction()`, …): Filament takes single actions there.
 - **Can't use in notifications**: Filament rebuilds their actions from arrays
@@ -57,8 +59,10 @@ SplitButton::make([CreateAction::make(), Action::make('import')])   // first act
 
 </details>
 
+## Advanced Usage
+
 <details>
-<summary><h2>Advanced Usage</h2></summary>
+<summary>Records as entries · existing buttons · your own components · keyboard · filament-mouseless · uninstall</summary>
 
 ### Records as entries
 
@@ -162,16 +166,22 @@ php artisan splitbutton:uninstall
 
 </details>
 
-<details class="filament-hidden">
-<summary><h2>To-Do</h2></summary>
+<div class="filament-hidden">
+
+## To-Do
+
+<details>
+<summary>Open points</summary>
 
 - translate to more languages
 - **Touch long press** is built in but not yet tested on a real touch device.
 
 </details>
 
-<details class="filament-hidden">
-<summary><h2>Ideas for the Future</h2></summary>
+## Ideas for the Future
+
+<details>
+<summary>Maybe later</summary>
 
 - Use Tutorial to inform users of possibilities
 - Export / Share?
@@ -181,9 +191,13 @@ php artisan splitbutton:uninstall
 
 </details>
 
-<details class="filament-hidden">
-<summary><h2>License</h2></summary>
+## License
+
+<details>
+<summary>Unlicense</summary>
 
 [Unlicense](LICENSE.md): public domain, do what you like.
 
 </details>
+
+</div>
