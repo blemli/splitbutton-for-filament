@@ -83,7 +83,8 @@ it('registers the plugin in the provider of the panel named with --panel', funct
         ->expectsOutputToContain('Registered SplitButtonPlugin::make() in app/Providers/Filament/AdminPanelProvider.php.')
         ->assertSuccessful();
 
-    $code = File::get($path);
+    // The fixture's line endings are the checkout's: CRLF on Windows.
+    $code = str_replace("\r\n", "\n", File::get($path));
 
     expect($code)->toContain("use Filament\\PanelProvider;\nuse Blemli\\SplitButton\\SplitButtonPlugin;\n")
         ->and($code)->toContain("                SecondPlugin::make(), // no comma yet\n                SplitButtonPlugin::make(),\n            ])")
@@ -187,6 +188,21 @@ it('fits the entry to the list it finds', function (string $list, string $expect
     'trailing comma' => ["[\n                A::make(),\n            ]", "[\n                A::make(),\n                SplitButtonPlugin::make(),\n            ]"],
     'nested arrays' => ["[\n                A::make(['x' => [1, 2]])\n            ]", "[\n                A::make(['x' => [1, 2]]),\n                SplitButtonPlugin::make(),\n            ]"],
 ]);
+
+it('writes the line endings the file already has', function () {
+    $windows = "<?php\r\n\r\nnamespace App;\r\n\r\nuse Filament\\Panel;\r\n\r\nclass P\r\n{\r\n    public function panel(\$panel)\r\n    {\r\n        return \$panel\r\n            ->plugins([\r\n                A::make(),\r\n            ]);\r\n    }\r\n}\r\n";
+
+    $result = PanelRegistrar::register($windows, SplitButtonPlugin::class, 'SplitButtonPlugin::make()');
+
+    expect($result)->toContain("A::make(),\r\n                SplitButtonPlugin::make(),\r\n            ]);")
+        ->and($result)->toContain("use Filament\\Panel;\r\nuse Blemli\\SplitButton\\SplitButtonPlugin;\r\n")
+        ->and(preg_match('/(?<!\r)\n/', $result))->toBe(0);
+
+    // A new list in a file that has none.
+    $fresh = str_replace("            ->plugins([\r\n                A::make(),\r\n            ]);", "            ->id('admin');", $windows);
+
+    expect(preg_match('/(?<!\r)\n/', PanelRegistrar::register($fresh, SplitButtonPlugin::class, 'SplitButtonPlugin::make()')))->toBe(0);
+});
 
 it('gives up rather than guess', function () {
     expect(PanelRegistrar::register('<?php this is not php', SplitButtonPlugin::class, 'SplitButtonPlugin::make()'))->toBeNull()

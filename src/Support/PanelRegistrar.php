@@ -54,11 +54,13 @@ class PanelRegistrar
             $edits += $import;
         }
 
-        // Back to front, so earlier positions stay where they are.
+        // Back to front, so earlier positions stay where they are — and
+        // with the line endings the file already has.
         krsort($edits);
+        $eol = str_contains($code, "\r\n") ? "\r\n" : "\n";
 
         foreach ($edits as $position => $text) {
-            $code = substr($code, 0, $position) . $text . substr($code, $position);
+            $code = substr($code, 0, $position) . str_replace("\n", $eol, $text) . substr($code, $position);
         }
 
         // Never hand back a file that no longer parses.
