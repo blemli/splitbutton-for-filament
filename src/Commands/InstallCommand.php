@@ -159,9 +159,12 @@ class InstallCommand extends Command
         return $providers;
     }
 
+    /**
+     * The way a path is written in an editor or on GitHub, on Windows too.
+     */
     protected function relativePath(string $path): string
     {
-        return ltrim(str_replace(base_path(), '', $path), DIRECTORY_SEPARATOR);
+        return ltrim(str_replace('\\', '/', str_replace(base_path(), '', $path)), '/');
     }
 
     /**
