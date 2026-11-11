@@ -10,7 +10,10 @@ Lets your Action Buttons have Options and lets your users customize those Option
 
 <div class="filament-hidden">
 
-> **PRs, Issues and Agents are welcome 🤗.** Let's make this package very nice together
+
+> [!IMPORTANT]
+>
+> PRs, Issues and Agents are welcome 🤗. Let's make this package very nice together
 
 </div>
 
@@ -42,22 +45,24 @@ SplitButton::make([CreateAction::make(), Action::make('import')])   // first act
 $panel->plugin(SplitButtonPlugin::make()->editable()->rememberLastUsed()->persist());   // persist() = database instead of session
 ```
 
-Also `CreateAction::make()->split([...])` and `ActionGroup::make([...])->split()` / `->overflow(2)`. Keyboard throughout (`E` edit, `Ctrl ↑↓` move, `H` hide, `D` default), works with [filament-mouseless](https://github.com/blemli/filament-mouseless). English and German, light and dark, Filament 4 and 5.
+Also `CreateAction::make()->split([...])` and `ActionGroup::make([...])->split()` / `->overflow(2)`. On your own Livewire component: `use InteractsWithSplitButtonActions`, return the buttons from `getSplitButtons()` and draw one with `{{ $this->getSplitButton('name') }}`. Keyboard throughout (`E` edit, `Ctrl ↑↓` move, `H` hide, `D` default), works with [filament-mouseless](https://github.com/blemli/filament-mouseless). English and German, light and dark, Filament 4 and 5.
 
 ## Limits
 
-- **Where it goes**: wherever Filament takes an action *group*. Tested: page headers and table rows. Should work, not yet tested: table header, toolbar and empty-state actions, form actions, `Actions::make()` in forms and infolists, modal footers.
-- **Not in field actions** (`->suffixAction()`, `->hintAction()`, …): Filament takes single actions there.
-- **Not in notifications**: Filament rebuilds their actions from arrays, so a split button arrives as a plain dropdown.
-- **Not as a method action** on a custom Livewire component (`public function deleteAction(): Action`): Filament does not resolve groups that way.
+- **Can't use it in field actions** (`->suffixAction()`, `->hintAction()`, …): Filament takes single actions there.
+- **Not in notifications**: Filament rebuilds their actions from arrays
+- **Modal footers** take it through `->extraModalFooterActions()`; Filament's `->modalFooterActions()` accepts single actions only.
+- **Only real actions can sit on the button**, not a submenu.
 - **Tables**: `->options(fn)` runs once for the whole table, without a record. For per-row differences use `->visible(fn ($record) => …)` on the entry.
-- **Per-user features** (edit mode, pin, last used) need the plugin on the panel and a signed-in user. Anywhere else the button is static.
 - **Layouts are per button, not per record**, and gone after logout unless you `->persist()`. Two split buttons on one page that start with the same action need `->key()`.
 - **Entries are remembered by action name**: rename an action and users lose its place. Give closure entries stable names (`template-{id}`).
-- **Only real actions can sit on the button**, not a submenu.
 - **formsettings presets** need formsettings-for-filament 0.5+ with `->presets()`. Edit presets need a record, and create and edit forms keep separate presets unless formsettings runs `->perResource()`.
-- **Touch long press and RTL** are built in but not yet tested on real devices.
+- **Touch long press** is built in but not yet tested on a real touch device.
+
+<div class="filament-hidden">
 
 ## License
 
 [Unlicense](LICENSE.md): public domain, do what you like.
+
+</div>

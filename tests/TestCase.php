@@ -8,6 +8,8 @@ use Blemli\SplitButton\SplitButtonManager;
 use Blemli\SplitButton\SplitButtonPlugin;
 use Blemli\SplitButton\SplitButtonServiceProvider;
 use Blemli\SplitButton\Tests\Fixtures\AdminPanelProvider;
+use Blemli\SplitButton\Tests\Fixtures\SchemaHost;
+use Blemli\SplitButton\Tests\Fixtures\SplitHost;
 use Blemli\SplitButton\Tests\Fixtures\TestPage;
 use Blemli\SplitButton\Tests\Fixtures\User;
 use Blemli\SplitButton\Tests\Fixtures\UsersTable;
@@ -37,6 +39,14 @@ class TestCase extends Orchestra
 
         TestPage::$headerActions = null;
         UsersTable::$recordActions = null;
+        UsersTable::$headerActions = null;
+        UsersTable::$toolbarActions = null;
+        UsersTable::$emptyStateActions = null;
+        UsersTable::$empty = false;
+        SchemaHost::$form = null;
+        SchemaHost::$infolist = null;
+        SchemaHost::$open = null;
+        SplitHost::$buttons = null;
     }
 
     protected function tearDown(): void

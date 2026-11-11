@@ -21,13 +21,24 @@ class UsersTable extends Component implements HasActions, HasSchemas, HasTable
 
     public static ?Closure $recordActions = null;
 
+    public static ?Closure $headerActions = null;
+
+    public static ?Closure $toolbarActions = null;
+
+    public static ?Closure $emptyStateActions = null;
+
+    public static bool $empty = false;
+
     public array $log = [];
 
     public function table(Table $table): Table
     {
         return $table
-            ->query(User::query())
+            ->query(static::$empty ? User::query()->whereRaw('1 = 0') : User::query())
             ->columns([TextColumn::make('name')])
+            ->headerActions(static::$headerActions ? (static::$headerActions)($this) : [])
+            ->toolbarActions(static::$toolbarActions ? (static::$toolbarActions)($this) : [])
+            ->emptyStateActions(static::$emptyStateActions ? (static::$emptyStateActions)($this) : [])
             ->recordActions(static::$recordActions ? (static::$recordActions)($this) : []);
     }
 

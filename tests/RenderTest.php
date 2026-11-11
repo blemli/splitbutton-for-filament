@@ -228,3 +228,21 @@ it('opens the menu under the control, on the side its trigger is on', function (
 
     Livewire::test(TestPage::class)->assertSeeHtml('x-float.placement.bottom-start');
 });
+
+it('sizes and colours the whole control from the split button, unless the action has its own', function () {
+    $html = SplitButton::make([Action::make('a')->label('Alpha'), Action::make('b')->label('Beta')])
+        ->size('sm')
+        ->color('danger')
+        ->toHtml();
+
+    // both halves: the button and its chevron
+    expect(substr_count($html, 'fi-btn fi-size-sm'))->toBe(2)
+        ->and(substr_count($html, 'fi-color-danger'))->toBeGreaterThanOrEqual(2);
+
+    $own = SplitButton::make([Action::make('a')->label('Alpha')->size('lg')->color('success'), Action::make('b')->label('Beta')])
+        ->size('sm')
+        ->color('danger')
+        ->toHtml();
+
+    expect($own)->toContain('fi-size-lg')->toContain('fi-color-success');
+});

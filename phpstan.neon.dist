@@ -18,3 +18,7 @@ parameters:
         # instance at runtime; PHPStan sees the service provider as $this.
         - identifier: varTag.nativeType
           path: src/SplitButtonServiceProvider.php
+        # A trait for the apps that use this package: nothing in src/ uses it,
+        # which is the point. The test suite exercises it (tests/Fixtures/SplitHost.php).
+        - identifier: trait.unused
+          path: src/Concerns/InteractsWithSplitButtonActions.php

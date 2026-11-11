@@ -588,6 +588,18 @@ class SplitButton extends ActionGroup
      */
     public function renderFace(Action $action): string
     {
+        // ->size() and ->color() on the split button mean the whole control,
+        // not just its chevron — unless the action has its own.
+        if (! $this->isOverflow) {
+            if (($size = parent::getSize()) !== null) {
+                $action->defaultSize($size);
+            }
+
+            if (($color = parent::getColor()) !== null) {
+                $action->defaultColor($color);
+            }
+        }
+
         return $action->defaultView(Action::BUTTON_VIEW)->toHtml();
     }
 
