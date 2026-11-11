@@ -4,7 +4,11 @@
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/blemli/splitbutton-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/splitbutton-for-filament) [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/blemli/splitbutton-for-filament/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/blemli/splitbutton-for-filament/actions?query=workflow%3Atests+branch%3Amain) [![Total Downloads](https://img.shields.io/packagist/dt/blemli/splitbutton-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/splitbutton-for-filament)
 
-A Filament action button joined to a menu of its variants. It is an `ActionGroup` of real actions, so it goes wherever Filament takes one, and each user can make the menu their own: reorder, hide, choose what sits on the button.
+One button for the thing you do most, with its variants one click away: **New order ▾** opens *From a quote*, *Repeat last order*, *Import from CSV*. Entries can be fixed, come from a closure (say, the three most used templates), or be the form presets a user marked as quick create.
+
+Each user then makes the menu their own. A long press on it (or `E`) lets them reorder the entries, hide the ones they never use, and choose which one sits on the button itself; if you allow it, the entry they picked last moves there on its own. Their layout follows them to every device, or stays in the session if you would rather not add a table.
+
+Every entry is an ordinary Filament action inside an `ActionGroup`, so modals, forms, authorization, URLs and key bindings work as they always do, in page headers, tables and forms. The same class also draws the plain "two buttons and a More menu" row.
 
 <img class="filament-hidden" src="https://raw.githubusercontent.com/blemli/splitbutton-for-filament/main/art/banner.jpg" alt="splitbutton: a button joined to its menu, and the menu each user arranges" />
 
