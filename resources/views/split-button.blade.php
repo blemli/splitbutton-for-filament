@@ -19,6 +19,11 @@
 
     $maxHeight = $group->getDropdownMaxHeight();
     $width = $group->getDropdownWidth();
+
+    // ->dropdownWidth('xs') and ->dropdownWidth(Width::ExtraSmall) are the same wish.
+    if (is_string($width)) {
+        $width = Width::tryFrom($width) ?? $width;
+    }
     $placement = $group->getDropdownPlacement() ?? ($triggerFirst ? 'bottom-start' : 'bottom-end');
     $lang = 'splitbutton-for-filament::splitbutton.';
 @endphp
@@ -40,7 +45,7 @@
         ])
     >
         @foreach ($faces as $face)
-            {!! $face->toHtml() !!}
+            {!! $group->renderFace($face) !!}
         @endforeach
 
         <div
@@ -49,8 +54,8 @@
         >
             <div
                 @if ($isStateful)
-                    x-on:mousedown="if ($event.button === 0 && ! suppressClick) toggle($event)"
-                    x-bind="surface"
+                    x-on:mousedown="if ($event.button === 0 && ! sb.suppressClick) toggle($event)"
+                    x-bind="sb.surface"
                 @else
                     x-on:mousedown="if ($event.button === 0) toggle($event)"
                 @endif
@@ -74,7 +79,13 @@
                 x-transition:leave-end="fi-opacity-0"
                 role="menu"
                 @if ($isStateful)
-                    x-bind="surface"
+                    x-bind="sb.surface"
+                @endif
+                @if ($isEditable)
+                    {{-- Edit rows carry a handle and two toggles next to the
+                         label: unless the developer chose a width, borrow
+                         Filament's own (important, layered) width class. --}}
+                    x-bind:class="{ 'fi-splitbutton-editing': sb.editing, 'fi-width-xs': sb.editing && @js(blank($width)) }"
                 @endif
                 @class([
                     'fi-dropdown-panel fi-splitbutton-panel',
@@ -90,21 +101,21 @@
                     <div
                         class="fi-dropdown-list"
                         role="group"
-                        @if ($isEditable) x-show="! editing" @endif
+                        @if ($isEditable) x-show="! sb.editing" @endif
                     >
                         @foreach ($section as $entry)
-                            {!! $entry->toHtml() !!}
+                            {!! $group->renderEntry($entry) !!}
                         @endforeach
                     </div>
                 @endforeach
 
                 @if ($isEditable)
                     @if ($group->hasEditHint())
-                        <div class="fi-dropdown-list" role="group" x-show="! editing">
+                        <div class="fi-dropdown-list" role="group" x-show="! sb.editing">
                             <button
                                 type="button"
                                 class="fi-dropdown-list-item fi-splitbutton-hint"
-                                x-on:click.stop="startEditing()"
+                                x-on:click.stop="sb.startEditing()"
                             >
                                 {{ generate_icon_html('heroicon-m-adjustments-horizontal') }}
 
@@ -115,7 +126,7 @@
                         </div>
                     @endif
 
-                    <template x-if="editing">
+                    <template x-if="sb.editing">
                         <div class="fi-dropdown-header fi-splitbutton-edit-header">
                             {{ generate_icon_html('heroicon-m-adjustments-horizontal') }}
 
@@ -124,7 +135,7 @@
                     </template>
 
                     <template
-                        x-for="(section, sectionIndex) in (editing ? sections : [])"
+                        x-for="(section, sectionIndex) in (sb.editing ? sb.sections : [])"
                         x-bind:key="sectionIndex"
                     >
                         <div
@@ -132,7 +143,7 @@
                             role="listbox"
                             aria-label="{{ __($lang . 'editing') }}"
                             x-sortable
-                            x-on:end.stop="reorder(sectionIndex, $event.target.sortable.toArray())"
+                            x-on:end.stop="sb.reorder(sectionIndex, $event.target.sortable.toArray())"
                             data-sortable-animation-duration="150"
                         >
                             <template x-for="item in section" x-bind:key="item.name">
@@ -142,8 +153,8 @@
                                     tabindex="-1"
                                     x-bind:x-sortable-item="item.name"
                                     x-bind:data-name="item.name"
-                                    x-bind:aria-selected="isFace(item.name) || isPinned(item.name)"
-                                    x-bind:class="{ 'fi-splitbutton-row-hidden': item.hidden, 'fi-splitbutton-row-face': isFace(item.name) || isPinned(item.name) }"
+                                    x-bind:aria-selected="sb.isFace(item.name) || sb.isPinned(item.name)"
+                                    x-bind:class="{ 'fi-splitbutton-row-hidden': item.hidden, 'fi-splitbutton-row-face': sb.isFace(item.name) || sb.isPinned(item.name) }"
                                 >
                                     <button
                                         type="button"
@@ -163,16 +174,16 @@
                                         tabindex="-1"
                                         class="fi-splitbutton-edit-btn fi-splitbutton-pin"
                                         x-show="item.pinnable"
-                                        x-on:click.stop="togglePin(item.name)"
-                                        x-bind:aria-pressed="isPinned(item.name)"
-                                        x-bind:aria-label="isPinned(item.name) ? @js(__($lang . 'unset_default')) : @js(__($lang . 'set_default'))"
-                                        x-bind:title="isPinned(item.name) ? @js(__($lang . 'unset_default')) : @js(__($lang . 'set_default'))"
+                                        x-on:click.stop="sb.togglePin(item.name)"
+                                        x-bind:aria-pressed="sb.isPinned(item.name)"
+                                        x-bind:aria-label="sb.isPinned(item.name) ? @js(__($lang . 'unset_default')) : @js(__($lang . 'set_default'))"
+                                        x-bind:title="sb.isPinned(item.name) ? @js(__($lang . 'unset_default')) : @js(__($lang . 'set_default'))"
                                     >
-                                        <span x-show="! (isFace(item.name) || isPinned(item.name))">
+                                        <span x-show="! (sb.isFace(item.name) || sb.isPinned(item.name))">
                                             {{ generate_icon_html('heroicon-o-star') }}
                                         </span>
 
-                                        <span x-show="isFace(item.name) || isPinned(item.name)" x-cloak>
+                                        <span x-show="sb.isFace(item.name) || sb.isPinned(item.name)" x-cloak>
                                             {{ generate_icon_html('heroicon-s-star') }}
                                         </span>
                                     </button>
@@ -181,7 +192,7 @@
                                         type="button"
                                         tabindex="-1"
                                         class="fi-splitbutton-edit-btn fi-splitbutton-eye"
-                                        x-on:click.stop="toggleHidden(item.name)"
+                                        x-on:click.stop="sb.toggleHidden(item.name)"
                                         x-bind:aria-pressed="item.hidden"
                                         x-bind:aria-label="item.hidden ? @js(__($lang . 'show')) : @js(__($lang . 'hide'))"
                                         x-bind:title="item.hidden ? @js(__($lang . 'show')) : @js(__($lang . 'hide'))"
@@ -199,17 +210,17 @@
                         </div>
                     </template>
 
-                    <template x-if="editing">
+                    <template x-if="sb.editing">
                         <div class="fi-dropdown-list fi-splitbutton-edit-footer" role="group">
                             @if ($group->remembersLastUsed())
                                 <button
                                     type="button"
                                     role="menuitemcheckbox"
                                     class="fi-dropdown-list-item"
-                                    x-bind:aria-checked="rememberLast"
-                                    x-on:click.stop="toggleRememberLast()"
+                                    x-bind:aria-checked="sb.rememberLast"
+                                    x-on:click.stop="sb.toggleRememberLast()"
                                 >
-                                    <span class="fi-splitbutton-check" x-bind:class="{ 'fi-splitbutton-checked': rememberLast }">
+                                    <span class="fi-splitbutton-check" x-bind:class="{ 'fi-splitbutton-checked': sb.rememberLast }">
                                         {{ generate_icon_html('heroicon-m-check') }}
                                     </span>
 
@@ -222,7 +233,7 @@
                             <button
                                 type="button"
                                 class="fi-dropdown-list-item"
-                                x-on:click.stop="reset()"
+                                x-on:click.stop="sb.reset()"
                             >
                                 {{ generate_icon_html('heroicon-m-arrow-uturn-left') }}
 
@@ -234,7 +245,7 @@
                             <button
                                 type="button"
                                 class="fi-dropdown-list-item"
-                                x-on:click.stop="finish()"
+                                x-on:click.stop="sb.finish()"
                             >
                                 {{ generate_icon_html('heroicon-m-check') }}
 
@@ -254,6 +265,6 @@
     </div>
 @else
     @foreach ($faces as $face)
-        {!! $face->toHtml() !!}
+        {!! $group->renderFace($face) !!}
     @endforeach
 @endif

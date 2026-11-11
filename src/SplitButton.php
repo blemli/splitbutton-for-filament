@@ -60,8 +60,6 @@ class SplitButton extends ActionGroup
 
     protected bool | Closure | null $shouldFilterUnauthorized = null;
 
-    protected bool $shouldPromoteToButtons = true;
-
     /** @var array<string, mixed> | null */
     protected ?array $composition = null;
 
@@ -222,17 +220,6 @@ class SplitButton extends ActionGroup
     public function filterUnauthorized(bool | Closure $condition = true): static
     {
         $this->shouldFilterUnauthorized = $condition;
-
-        return $this;
-    }
-
-    /**
-     * By default the actions out front are drawn as buttons. Pass false to
-     * leave each action's own style (link, icon button, …) untouched.
-     */
-    public function buttons(bool $condition = true): static
-    {
-        $this->shouldPromoteToButtons = $condition;
 
         return $this;
     }
@@ -524,21 +511,10 @@ class SplitButton extends ActionGroup
             $menu = [];
         }
 
-        foreach ($faces as $name => $action) {
-            if ($this->shouldPromoteToButtons) {
-                $action->defaultView(Action::BUTTON_VIEW);
-            }
-
-            $this->tag($action, $name);
-        }
-
-        foreach ($menu as $section) {
-            foreach ($section as $name => $entry) {
+        foreach ([$faces, ...$menu] as $entries) {
+            foreach ($entries as $name => $entry) {
                 if ($entry instanceof Action) {
-                    $entry->defaultView(Action::GROUPED_VIEW);
                     $this->tag($entry, $name);
-                } else {
-                    $entry->defaultTriggerView(ActionGroup::GROUPED_VIEW);
                 }
             }
         }
@@ -574,6 +550,29 @@ class SplitButton extends ActionGroup
             'hasTrigger' => ($menu !== []) || ($hasHidden && $this->isEditable() && $this->isStateful()),
             'hasHidden' => $hasHidden,
         ];
+    }
+
+    /**
+     * Draw an entry out front, as the button it would be on its own. An
+     * explicit ->link() / ->iconButton() on the action still wins.
+     *
+     * The style is set right before drawing, never ahead of time: Filament
+     * resets every child of a group to "menu item" whenever it asks the
+     * group whether it is hidden.
+     */
+    public function renderFace(Action $action): string
+    {
+        return $action->defaultView(Action::BUTTON_VIEW)->toHtml();
+    }
+
+    /**
+     * Draw an entry inside the menu: an item, or a submenu for a group.
+     */
+    public function renderEntry(Action | ActionGroup $entry): string
+    {
+        return $entry instanceof Action
+            ? $entry->defaultView(Action::GROUPED_VIEW)->toHtml()
+            : $entry->defaultTriggerView(ActionGroup::GROUPED_VIEW)->toHtml();
     }
 
     /**

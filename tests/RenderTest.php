@@ -8,6 +8,7 @@ use Blemli\SplitButton\Tests\Fixtures\User;
 use Blemli\SplitButton\Tests\Fixtures\UsersTable;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Support\Enums\Width;
 use Livewire\Livewire;
 
 function shootButton(): SplitButton
@@ -200,4 +201,13 @@ it('takes the colour, size and outline of the button for its chevron', function 
     $own->compose();
 
     expect($own->getColor())->toBe('gray');
+});
+
+it('takes a dropdown width as an enum or as its string', function () {
+    $actions = fn (): array => [Action::make('a'), Action::make('b')];
+
+    expect(SplitButton::make($actions())->dropdownWidth('xs')->toHtml())->toContain('fi-width-xs')
+        ->and(SplitButton::make($actions())->dropdownWidth(Width::Small)->toHtml())->toContain('fi-width-sm')
+        ->and(SplitButton::make($actions())->dropdownWidth('my-own-class')->toHtml())->toContain('my-own-class')
+        ->and(SplitButton::make($actions())->toHtml())->not->toContain('fi-width-');
 });

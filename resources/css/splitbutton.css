@@ -19,11 +19,11 @@
     order: -1;
 }
 
-/* Overflow: a row of buttons with "More" standing apart. */
+/* Overflow: a row of buttons with "More" standing apart. The wrapper
+   steps aside, so they line up (and wrap) with the actions around them,
+   at whatever gap that row uses. */
 .fi-splitbutton-overflow {
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.75rem;
+    display: contents;
 }
 
 /* Split: one control. The halves share a one pixel seam, the way

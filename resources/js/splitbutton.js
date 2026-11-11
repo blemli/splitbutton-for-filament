@@ -24,6 +24,8 @@ export default function splitButton() {
 
         pressOrigin: null,
 
+        rootEl: null,
+
         panelEl: null,
 
         dropdownEl: null,
@@ -34,48 +36,50 @@ export default function splitButton() {
 
         editKeyListener: null,
 
-        // Bound (x-bind) to the trigger and to the panel: the panel may be
-        // teleported out of this element, so nothing can be delegated here.
+        // This component, under a name nothing else uses. The trigger and
+        // the panel live inside Filament's dropdown scope, where its
+        // members (isOpen, close, …) shadow ours and `$root` is the
+        // dropdown — so the template and the handlers below always go
+        // through `sb`.
+        sb: null,
+
+        // Bound (x-bind) to the trigger and to the panel.
         surface: {
             ['x-on:pointerdown'](event) {
-                this.pressStart(event)
+                this.sb.pressStart(event)
             },
             ['x-on:pointermove'](event) {
-                this.pressMove(event)
+                this.sb.pressMove(event)
             },
             ['x-on:pointerup']() {
-                this.pressEnd()
+                this.sb.pressEnd()
             },
             ['x-on:pointercancel']() {
-                this.pressEnd()
+                this.sb.pressEnd()
             },
             ['x-on:contextmenu'](event) {
-                if (this.pressTimer || this.suppressClick) {
+                if (this.sb.pressTimer || this.sb.suppressClick) {
                     event.preventDefault()
                 }
             },
             ['x-on:click.capture'](event) {
-                this.onClickCapture(event)
+                this.sb.onClickCapture(event)
             },
             ['x-on:keydown'](event) {
-                this.onKeydown(event)
+                this.sb.onKeydown(event)
             },
         },
 
         init() {
-            this.dropdownEl = this.$root.querySelector('.fi-dropdown')
+            this.sb = this
+            this.rootEl = this.$el
+            this.dropdownEl = this.rootEl.querySelector('.fi-dropdown')
             this.triggerEl = this.dropdownEl?.querySelector(
                 ':scope > .fi-dropdown-trigger',
             )
             this.panelEl = this.dropdownEl?.querySelector(
                 ':scope > .fi-dropdown-panel',
             )
-
-            // A teleported panel leaves this element; hand it our scope so
-            // rows rendered later still resolve `editing` and friends.
-            if (this.panelEl && this.dropdownEl && window.Alpine.addScopeToNode) {
-                window.Alpine.addScopeToNode(this.panelEl, {}, this.dropdownEl)
-            }
 
             this.editKeyListener = (event) => this.onEditKeydown(event)
         },
@@ -88,7 +92,7 @@ export default function splitButton() {
 
         config() {
             try {
-                return JSON.parse(this.$root.dataset.splitbutton ?? '{}')
+                return JSON.parse(this.rootEl?.dataset.splitbutton ?? '{}')
             } catch {
                 return {}
             }
@@ -248,7 +252,7 @@ export default function splitButton() {
             window.addEventListener('keydown', this.editKeyListener, true)
             this.watchClose()
 
-            this.$nextTick(() => setTimeout(() => this.focusRow(0), 60))
+            this.focusWhenReady()
         },
 
         stopEditing() {
@@ -278,9 +282,15 @@ export default function splitButton() {
                 return
             }
 
+            // The panel is positioned (style changes) while still hidden,
+            // just before it shows — only a panel that was open can close.
+            let wasOpen = this.isOpen()
+
             this.closeObserver?.disconnect()
             this.closeObserver = new MutationObserver(() => {
-                if (this.editing && this.panelEl.style.display === 'none') {
+                if (this.panelEl.style.display !== 'none') {
+                    wasOpen = true
+                } else if (wasOpen && this.editing) {
                     this.stopEditing()
                 }
             })
@@ -513,6 +523,22 @@ export default function splitButton() {
                     '.fi-splitbutton-edit-row, .fi-splitbutton-edit-footer .fi-dropdown-list-item',
                 ) ?? [],
             )
+        },
+
+        // The rows render and the panel fades in a moment after edit mode
+        // starts; keep trying until a row actually takes the focus.
+        focusWhenReady(attempt = 0) {
+            if (!this.editing || attempt > 12) {
+                return
+            }
+
+            const first = this.focusables()[0]
+
+            first?.focus()
+
+            if (!first || document.activeElement !== first) {
+                setTimeout(() => this.focusWhenReady(attempt + 1), 40)
+            }
         },
 
         focusRow(index) {

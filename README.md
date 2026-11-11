@@ -1,87 +1,41 @@
-# The button that adapts to how you work.
+# splitbutton
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/blemli/splitbutton-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/splitbutton-for-filament)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/blemli/splitbutton-for-filament/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/blemli/splitbutton-for-filament/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/blemli/splitbutton-for-filament/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/blemli/splitbutton-for-filament/actions?query=workflow%3A"Fix+PHP+code+styling"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/blemli/splitbutton-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/splitbutton-for-filament)
+<p class="filament-hidden">The button that adapts to how you work.</p>
 
+<img class="filament-hidden" src="https://raw.githubusercontent.com/blemli/splitbutton-for-filament/main/art/banner.jpg" alt="splitbutton" />
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/blemli/splitbutton-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/splitbutton-for-filament) [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/blemli/splitbutton-for-filament/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/blemli/splitbutton-for-filament/actions?query=workflow%3Atests+branch%3Amain) [![Total Downloads](https://img.shields.io/packagist/dt/blemli/splitbutton-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/splitbutton-for-filament)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+A Filament action button joined to a menu of its variants. It is an `ActionGroup` of real actions, so it goes wherever Filament takes one, and each user can make the menu their own: reorder, hide, choose what sits on the button. [filament-action-overflow](https://github.com/harvirsidhu/filament-action-overflow) composes a static split or "More" row; this adds the per-user layer and covers that composition too.
+
+![splitbutton](https://raw.githubusercontent.com/blemli/splitbutton-for-filament/main/art/screenshot.png)
 
 ## Installation
 
-You can install the package via composer:
-
 ```bash
 composer require blemli/splitbutton-for-filament
-```
-
-> [!IMPORTANT]
-> If you have not set up a custom theme and are using Filament Panels follow the instructions in the [Filament Docs](https://filamentphp.com/docs/4.x/styling/overview#creating-a-custom-theme) first.
-
-After setting up a custom theme add the plugin's views to your theme css file or your app's css file if using the standalone packages.
-
-```css
-@source '../../../../vendor/blemli/splitbutton-for-filament/resources/**/*.blade.php';
-```
-
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --tag="splitbutton-for-filament-migrations"
-php artisan migrate
-```
-
-You can publish the config file with:
-
-```bash
-php artisan vendor:publish --tag="splitbutton-for-filament-config"
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="splitbutton-for-filament-views"
-```
-
-This is the contents of the published config file:
-
-```php
-return [
-];
+php artisan splitbutton-for-filament:install -n   # add --run-migrations for ->persist(); remove with splitbutton:uninstall
 ```
 
 ## Usage
 
 ```php
-$splitButton = new Blemli\SplitButton();
-echo $splitButton->echoPhrase('Hello, Blemli!');
+SplitButton::make([CreateAction::make(), Action::make('import')])   // first action = the button, the rest = its menu
+    ->options(fn () => Template::mostUsed(3)->map(fn ($t) => Action::make("template-{$t->id}")->label($t->name)->url(...)))   // … entries from a closure
+    ->editable()            // … users rearrange it: long press the menu (or E) to reorder, hide, pick the default, reset
+    ->editHint()            // … a visible "Customize" entry for those who never long press
+    ->rememberLastUsed()    // … offers users a "last used on the button" toggle
+    ->formSettingsPresets() // … lists formsettings-for-filament presets marked quick create / quick edit
+    ->overflow(2)           // … instead: two buttons out front, the rest under "More" (->dropdown(false) groups become sections)
+    ->triggerPosition('start')   // … menu trigger first
+    ->filterUnauthorized();      // … drop unauthorized entries instead of disabling them
+
+// Everything is opt-in. Panel-wide defaults, and what the per-user features need:
+$panel->plugin(SplitButtonPlugin::make()->editable()->rememberLastUsed()->persist());   // persist() = database instead of session
 ```
 
-## Testing
-
-```bash
-composer test
-```
-
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](.github/SECURITY.md) on how to report security vulnerabilities.
-
-## Credits
-
-- [grafst](https://github.com/grafst)
-- [All Contributors](../../contributors)
+Also `CreateAction::make()->split([...])` and `ActionGroup::make([...])->split()` / `->overflow(2)`. Keyboard throughout (`E` edit, `Ctrl ↑↓` move, `H` hide, `D` default), works with [filament-mouseless](https://github.com/blemli/filament-mouseless). English and German, light and dark, Filament 4 and 5.
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+MIT © [blemli](https://github.com/blemli)

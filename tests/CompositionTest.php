@@ -33,14 +33,38 @@ it('puts the first action on the button and the rest in the menu', function () {
         ->and($composition['face'])->toBe('create');
 });
 
-it('draws the face as a button and the menu entries as dropdown items', function () {
-    $composition = SplitButton::make([
-        Action::make('create'),
-        Action::make('import'),
-    ])->compose();
+it('draws what is out front as buttons and the menu as items, whatever Filament asked the group before', function () {
+    $button = SplitButton::make([
+        Action::make('edit')->label('Edit it'),
+        Action::make('archive')->label('Archive it'),
+        Action::make('publish')->label('Publish it'),
+        Action::make('delete')->label('Delete it'),
+    ])->overflow(2);
 
-    expect($composition['faces'][0]->getView())->toBe(Action::BUTTON_VIEW)
-        ->and($composition['sections'][0][0]->getView())->toBe(Action::GROUPED_VIEW);
+    // Filament asks every group whether it is hidden before drawing it —
+    // which resets all its children to "menu item".
+    $button->compose();
+    $button->isHidden();
+
+    $html = $button->toHtml();
+
+    preg_match_all('/class="(fi-ac-[a-z-]+)[^"]*"[^>]*>(?:\s|<[^>]+>)*([A-Z][a-z]+ it)/', $html, $matches, PREG_SET_ORDER);
+
+    expect(array_column($matches, 1, 2))->toBe([
+        'Edit it' => 'fi-ac-btn-action',
+        'Archive it' => 'fi-ac-btn-action',
+        'Publish it' => 'fi-ac-grouped-action',
+        'Delete it' => 'fi-ac-grouped-action',
+    ]);
+});
+
+it('respects an explicit style on the action out front', function () {
+    $html = SplitButton::make([
+        Action::make('edit')->label('Edit it')->link(),
+        Action::make('archive')->label('Archive it'),
+    ])->toHtml();
+
+    expect($html)->toContain('fi-ac-link-action');
 });
 
 it('drops hidden and invisible actions before composing', function () {
@@ -226,14 +250,4 @@ it('resolves the trigger position from the fluent call, then the config', functi
     config()->set('splitbutton-for-filament.trigger_position', 'start');
 
     expect(SplitButton::make([])->getTriggerPosition())->toBe(TriggerPosition::Start);
-});
-
-it('leaves the action styles alone with buttons(false)', function () {
-    $composition = SplitButton::make([
-        Action::make('edit')->link(),
-        Action::make('archive'),
-        Action::make('delete'),
-    ])->buttons(false)->compose();
-
-    expect($composition['faces'][0]->getView())->toBe(Action::LINK_VIEW);
 });
