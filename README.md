@@ -162,7 +162,7 @@ php artisan splitbutton:uninstall
 
 </details>
 
-<details>
+<details class="filament-hidden">
 <summary><h2>To-Do</h2></summary>
 
 - translate to more languages
@@ -170,7 +170,7 @@ php artisan splitbutton:uninstall
 
 </details>
 
-<details>
+<details class="filament-hidden">
 <summary><h2>Ideas for the Future</h2></summary>
 
 - Use Tutorial to inform users of possibilities
@@ -181,7 +181,7 @@ php artisan splitbutton:uninstall
 
 </details>
 
-<details>
+<details class="filament-hidden">
 <summary><h2>License</h2></summary>
 
 [Unlicense](LICENSE.md): public domain, do what you like.
