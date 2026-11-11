@@ -1,6 +1,7 @@
-// The per-user layer of a SplitButton: long press / E to enter edit mode,
-// reorder (drag or Ctrl+arrows), hide, pin to the button, reset, and the
-// "last used" beacon. Loaded on demand, only for buttons with user state —
+// The per-user layer of a SplitButton: the "Customize" entry, E or (when
+// switched on) a long press to enter edit mode,
+// reorder (drag or Ctrl+arrows), hide, pin to the button, reset, the
+// "follow my picks" switches and the beacon that counts a pick. Loaded on demand, only for buttons with user state —
 // a static split button is plain Filament markup with no script at all.
 export default function splitButton() {
     return {
@@ -14,9 +15,14 @@ export default function splitButton() {
 
         declared: null,
 
-        rememberLast: false,
+        // The "follow my picks" strategies on offer ({ name, label, pick })
+        // and the one that is on, if any.
+        strategies: [],
 
-        canRememberLast: false,
+        strategy: null,
+
+        // Whether the user may switch strategies, or the developer decided.
+        canSwitchStrategy: false,
 
         suppressClick: false,
 
@@ -147,7 +153,7 @@ export default function splitButton() {
 
             const config = this.config()
 
-            if (!config.editable) {
+            if (!config.editable || !config.longPress) {
                 return
             }
 
@@ -157,7 +163,7 @@ export default function splitButton() {
                 this.pressTimer = null
                 this.suppressClick = true
                 this.startEditing()
-            }, config.longPress ?? 500)
+            }, config.longPressDelay ?? 500)
         },
 
         pressMove(event) {
@@ -208,6 +214,24 @@ export default function splitButton() {
             }
         },
 
+        // A click on the button itself is a pick as well: without it the
+        // entry on the button could never stay the most used one.
+        onFaceClick(event) {
+            if (this.editing || !(event.target instanceof Element)) {
+                return
+            }
+
+            const option = event.target.closest('[data-splitbutton-option]')
+
+            if (
+                option &&
+                this.rootEl?.contains(option) &&
+                !this.dropdownEl?.contains(option)
+            ) {
+                this.trackUse(option.dataset.splitbuttonOption)
+            }
+        },
+
         onKeydown(event) {
             if (
                 this.editing ||
@@ -219,7 +243,9 @@ export default function splitButton() {
                 return
             }
 
-            if (!this.config().editable) {
+            const config = this.config()
+
+            if (!config.editable || config.keyboard === false) {
                 return
             }
 
@@ -242,8 +268,9 @@ export default function splitButton() {
             )
             this.pinned = config.pinned ?? null
             this.declared = config.declared ?? null
-            this.rememberLast = !!config.rememberLast
-            this.canRememberLast = !!config.canRememberLast
+            this.strategies = config.strategies ?? []
+            this.strategy = config.strategy ?? null
+            this.canSwitchStrategy = !!config.canSwitchStrategy
             this.dirty = false
             this.editing = true
 
@@ -301,13 +328,26 @@ export default function splitButton() {
         },
 
         face() {
-            if (this.pinned) {
-                return this.pinned
-            }
-
             const visible = this.sections
                 .flat()
                 .filter((item) => item.pinnable && !item.hidden)
+
+            // A pin set by hand is the last word; without one the button
+            // follows the user's picks.
+            if (
+                this.pinned &&
+                visible.some((item) => item.name === this.pinned)
+            ) {
+                return this.pinned
+            }
+
+            const picked = this.strategies.find(
+                (option) => option.name === this.strategy,
+            )?.pick
+
+            if (picked && visible.some((item) => item.name === picked)) {
+                return picked
+            }
 
             return (
                 visible.find((item) => item.name === this.declared)?.name ??
@@ -350,7 +390,7 @@ export default function splitButton() {
                 item.hidden = false
             }
 
-            this.save()
+            this.save(this.pinned === name ? 'pinned' : 'unpinned', name)
         },
 
         toggleHidden(name) {
@@ -381,12 +421,19 @@ export default function splitButton() {
             }
 
             item.hidden = !item.hidden
-            this.save()
+            this.save(item.hidden ? 'hidden' : 'shown', name)
         },
 
-        toggleRememberLast() {
-            this.rememberLast = !this.rememberLast
-            this.save()
+        toggleStrategy(name) {
+            this.strategy = this.strategy === name ? null : name
+
+            // Whoever turns a strategy on wants to see it: a pin from
+            // before would keep its place otherwise.
+            if (this.strategy) {
+                this.pinned = null
+            }
+
+            this.save('auto_pin', this.strategy)
         },
 
         reorder(sectionIndex, names) {
@@ -401,7 +448,7 @@ export default function splitButton() {
             this.sections[sectionIndex] = [...section].sort(
                 (a, b) => (order.get(a.name) ?? 0) - (order.get(b.name) ?? 0),
             )
-            this.save()
+            this.save('reordered')
         },
 
         move(name, delta) {
@@ -423,7 +470,7 @@ export default function splitButton() {
 
             section.splice(to, 0, section.splice(from, 1)[0])
             this.sections[sectionIndex] = section
-            this.save()
+            this.save('reordered', name)
 
             this.$nextTick(() => this.focusName(name))
         },
@@ -465,7 +512,9 @@ export default function splitButton() {
             }
         },
 
-        save() {
+        // `change` and `entry` say what was just done: the server passes
+        // them on to whoever listens for its SplitButtonCustomized event.
+        save(change = null, entry = null) {
             const config = this.config()
             const items = this.sections.flat()
 
@@ -478,7 +527,11 @@ export default function splitButton() {
                     .filter((item) => item.hidden)
                     .map((item) => item.name),
                 default: this.pinned,
-                remember_last: this.canRememberLast ? this.rememberLast : null,
+                auto_pin: this.canSwitchStrategy
+                    ? (this.strategy ?? 'off')
+                    : null,
+                change,
+                entry,
             })
         },
 
@@ -497,7 +550,7 @@ export default function splitButton() {
         trackUse(name) {
             const config = this.config()
 
-            if (!config.rememberLast || !config.urls?.used || !name) {
+            if (!config.track || !config.urls?.used || !name) {
                 return
             }
 
@@ -513,6 +566,21 @@ export default function splitButton() {
         },
 
         // Keyboard in edit mode ----------------------------------------
+        //
+        // Moving a row takes Ctrl or ⌘ with the arrows. On macOS Ctrl with
+        // an arrow never reaches the page (Mission Control, Spaces), so
+        // the legend names the key that works where it is read.
+
+        isApple() {
+            const platform =
+                navigator.userAgentData?.platform ?? navigator.platform ?? ''
+
+            return /mac|iphone|ipad/i.test(platform)
+        },
+
+        keys(legend, ctrl) {
+            return legend.replace(':mod', this.isApple() ? '⌘' : ctrl)
+        },
         //
         // Registered on window in the capture phase so it runs before any
         // global shortcut layer (filament-mouseless listens on document).
@@ -572,6 +640,11 @@ export default function splitButton() {
             const name = row?.dataset.name
             const mod = event.ctrlKey || event.metaKey
             const items = this.focusables()
+
+            // With the shortcuts switched off, the keys that operate any
+            // menu stay: arrows to walk it, Escape to leave. Letters and
+            // Ctrl / ⌘ combinations are left to whoever else wants them.
+            const shortcuts = this.config().keyboard !== false
             const index = items.indexOf(
                 inside
                     ? (active.closest(
@@ -584,16 +657,22 @@ export default function splitButton() {
 
             switch (event.key) {
                 case 'ArrowDown':
-                    mod && name
-                        ? this.move(name, 1)
-                        : this.focusRow(index < 0 ? 0 : (index + 1) % items.length)
+                    mod && !shortcuts
+                        ? (handled = false)
+                        : mod && name
+                          ? this.move(name, 1)
+                          : this.focusRow(
+                                index < 0 ? 0 : (index + 1) % items.length,
+                            )
                     break
                 case 'ArrowUp':
-                    mod && name
-                        ? this.move(name, -1)
-                        : this.focusRow(
-                              index <= 0 ? items.length - 1 : index - 1,
-                          )
+                    mod && !shortcuts
+                        ? (handled = false)
+                        : mod && name
+                          ? this.move(name, -1)
+                          : this.focusRow(
+                                index <= 0 ? items.length - 1 : index - 1,
+                            )
                     break
                 case 'Home':
                     this.focusRow(0)
@@ -604,14 +683,14 @@ export default function splitButton() {
                 case 'h':
                 case 'H':
                 case ' ':
-                    name && !mod && !event.altKey
+                    shortcuts && name && !mod && !event.altKey
                         ? this.toggleHidden(name)
                         : (handled = false)
                     break
                 case 'd':
                 case 'D':
                 case 'Enter':
-                    name && !mod && !event.altKey
+                    shortcuts && name && !mod && !event.altKey
                         ? this.togglePin(name)
                         : (handled = false)
                     break

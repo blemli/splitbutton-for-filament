@@ -1,5 +1,5 @@
 @php
-    use Blemli\SplitButton\Enums\TriggerPosition;
+    use Blemli\SplitButton\Enums\ChevronPosition;
     use Blemli\SplitButton\SplitButtonServiceProvider;
     use Filament\Support\Enums\Width;
     use Filament\Support\Facades\FilamentAsset;
@@ -15,7 +15,15 @@
     $isOverflow = $group->isOverflow();
     $isStateful = $hasTrigger && $group->isStateful();
     $isEditable = $isStateful && $group->isEditable();
-    $triggerFirst = $group->getTriggerPosition() === TriggerPosition::Start;
+    $hasLongPress = $isEditable && $group->isEditableWithLongPress();
+    $hasKeyboard = $isEditable && $group->isEditableWithKeyboard();
+    $tooltip = match (true) {
+        $hasKeyboard && $hasLongPress => 'customize_tooltip_hold',
+        $hasKeyboard => 'customize_tooltip',
+        $hasLongPress => 'customize_tooltip_hold_only',
+        default => null,
+    };
+    $chevronFirst = $group->getChevronPosition() === ChevronPosition::Start;
 
     $maxHeight = $group->getDropdownMaxHeight();
     $width = $group->getDropdownWidth();
@@ -34,14 +42,16 @@
             x-load
             x-load-src="{{ FilamentAsset::getAlpineComponentSrc('splitbutton', SplitButtonServiceProvider::ASSET_PACKAGE) }}"
             x-data="splitButton()"
+            x-on:click.capture="onFaceClick($event)"
             data-splitbutton="{{ json_encode($group->getClientState()) }}"
         @endif
         @class([
             'fi-splitbutton',
             'fi-splitbutton-split' => ! $isOverflow,
             'fi-splitbutton-overflow' => $isOverflow,
-            'fi-splitbutton-trigger-start' => $triggerFirst,
+            'fi-splitbutton-chevron-start' => $chevronFirst,
             'fi-splitbutton-editable' => $isEditable,
+            'fi-splitbutton-longpress' => $hasLongPress,
         ])
     >
         @foreach ($faces as $face)
@@ -62,8 +72,14 @@
                 {{-- Filament 4's dropdown has no keyboard layer of its own. --}}
                 x-on:keyup.enter="typeof handleTriggerKeydown === 'undefined' && toggle($event)"
                 x-on:keyup.space="typeof handleTriggerKeydown === 'undefined' && toggle($event)"
-                @if ($isEditable)
+                @if ($tooltip === 'customize_tooltip_hold')
+                    title="{{ __($lang . 'customize_tooltip_hold') }}"
+                @elseif ($tooltip === 'customize_tooltip')
                     title="{{ __($lang . 'customize_tooltip') }}"
+                @elseif ($tooltip === 'customize_tooltip_hold_only')
+                    title="{{ __($lang . 'customize_tooltip_hold_only') }}"
+                @endif
+                @if ($hasKeyboard)
                     aria-keyshortcuts="E"
                 @endif
                 class="fi-dropdown-trigger"
@@ -92,6 +108,7 @@
                     ($width instanceof Width) ? "fi-width-{$width->value}" : (is_string($width) ? $width : ''),
                     'fi-scrollable' => $maxHeight,
                     'fi-splitbutton-editable' => $isEditable,
+                    'fi-splitbutton-longpress' => $hasLongPress,
                 ])
                 @style([
                     ('max-height: ' . e($maxHeight)) => $maxHeight,
@@ -110,7 +127,7 @@
                 @endforeach
 
                 @if ($isEditable)
-                    @if ($group->hasEditHint())
+                    @if ($group->isEditableWithMenuEntry())
                         <div class="fi-dropdown-list" role="group" x-show="! sb.editing">
                             <button
                                 type="button"
@@ -212,23 +229,23 @@
 
                     <template x-if="sb.editing">
                         <div class="fi-dropdown-list fi-splitbutton-edit-footer" role="group">
-                            @if ($group->remembersLastUsed())
+                            {{-- One switch per strategy on offer; at most one is on. --}}
+                            <template x-for="option in (sb.canSwitchStrategy ? sb.strategies : [])" x-bind:key="option.name">
                                 <button
                                     type="button"
-                                    role="menuitemcheckbox"
-                                    class="fi-dropdown-list-item"
-                                    x-bind:aria-checked="sb.rememberLast"
-                                    x-on:click.stop="sb.toggleRememberLast()"
+                                    class="fi-dropdown-list-item fi-splitbutton-strategy"
+                                    x-bind:role="sb.strategies.length > 1 ? 'menuitemradio' : 'menuitemcheckbox'"
+                                    x-bind:aria-checked="sb.strategy === option.name"
+                                    x-bind:data-strategy="option.name"
+                                    x-on:click.stop="sb.toggleStrategy(option.name)"
                                 >
-                                    <span class="fi-splitbutton-check" x-bind:class="{ 'fi-splitbutton-checked': sb.rememberLast }">
+                                    <span class="fi-splitbutton-check" x-bind:class="{ 'fi-splitbutton-checked': sb.strategy === option.name }">
                                         {{ generate_icon_html('heroicon-m-check') }}
                                     </span>
 
-                                    <span class="fi-dropdown-list-item-label">
-                                        {{ __($lang . 'remember_last') }}
-                                    </span>
+                                    <span class="fi-dropdown-list-item-label" x-text="option.label"></span>
                                 </button>
-                            @endif
+                            </template>
 
                             <button
                                 type="button"
@@ -254,9 +271,13 @@
                                 </span>
                             </button>
 
-                            <p class="fi-splitbutton-keys">
-                                {{ __($lang . 'keys') }}
-                            </p>
+                            @if ($hasKeyboard)
+                                {{-- Ctrl + arrows belongs to macOS (Mission Control, Spaces): there it is ⌘. --}}
+                                <p
+                                    class="fi-splitbutton-keys"
+                                    x-text="sb.keys(@js(__($lang . 'keys')), @js(__($lang . 'key_ctrl')))"
+                                ></p>
+                            @endif
                         </div>
                     </template>
                 @endif

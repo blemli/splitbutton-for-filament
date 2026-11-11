@@ -16,6 +16,13 @@ class UninstallCommand extends Command
         {--drop-tables : Drop the splitbutton_layouts table (default: no)}
         {--remove-composer : Run "composer remove blemli/splitbutton-for-filament" afterwards (default: no)}';
 
+    /**
+     * The package name works as a prefix too, as for the installer.
+     *
+     * @var array<string>
+     */
+    protected $aliases = ['splitbutton-for-filament:uninstall'];
+
     public $description = 'Uninstall splitbutton-for-filament: drop its table and remove published files';
 
     public function handle(): int

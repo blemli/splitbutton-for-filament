@@ -2,11 +2,16 @@
 
 namespace Blemli\SplitButton\Http\Controllers;
 
+use Blemli\SplitButton\Enums\AutoPin;
+use Blemli\SplitButton\Enums\Customization;
+use Blemli\SplitButton\Events\SplitButtonCustomized;
+use Blemli\SplitButton\Events\SplitButtonReset;
 use Blemli\SplitButton\Layout;
 use Blemli\SplitButton\SplitButtonManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 
 /**
  * Saves the signed-in user's own menu layouts. Registered inside the
@@ -22,7 +27,10 @@ class LayoutController
         $key = $this->authorizedKey($request);
 
         if ($request->boolean('reset')) {
+            $previous = $this->manager->layout($key);
             $this->manager->reset($key);
+
+            SplitButtonReset::dispatch($this->manager->user(), $key, $previous);
 
             return response()->json(['layout' => (new Layout)->toArray()]);
         }
@@ -33,13 +41,22 @@ class LayoutController
             'hidden' => ['array', 'max:' . Layout::MAX_ENTRIES],
             'hidden.*' => ['string', 'max:255'],
             'default' => ['nullable', 'string', 'max:255'],
-            'remember_last' => ['nullable', 'boolean'],
+            'auto_pin' => ['nullable', Rule::in([Layout::OFF, ...array_column(AutoPin::cases(), 'value')])],
+            // What the user just did, for whoever listens to SplitButtonCustomized.
+            'change' => ['nullable', Rule::enum(Customization::class)],
+            'entry' => ['nullable', 'string', 'max:255'],
         ]);
+
+        $stored = $this->manager->layout($key);
 
         $layout = Layout::fromArray([
             ...$data,
-            // Only the picks themselves move "last used" (see used()).
-            'last_used' => $this->manager->layout($key)->lastUsed,
+            // No switch on this button (none offered, or one forced): the
+            // user's earlier choice stays for the day there is one again.
+            'auto_pin' => $data['auto_pin'] ?? $stored->autoPin,
+            // Only the picks themselves count as picks (see used()).
+            'last_used' => $stored->lastUsed,
+            'usage' => $stored->usage,
         ]);
 
         // A hidden entry cannot sit on the button face.
@@ -48,6 +65,15 @@ class LayoutController
         }
 
         $this->manager->save($key, $layout);
+
+        SplitButtonCustomized::dispatch(
+            $this->manager->user(),
+            $key,
+            $layout,
+            $stored,
+            Customization::tryFrom($data['change'] ?? ''),
+            $data['entry'] ?? null,
+        );
 
         return response()->json(['layout' => $layout->toArray()]);
     }
@@ -60,10 +86,7 @@ class LayoutController
             'name' => ['required', 'string', 'max:255'],
         ]);
 
-        $layout = $this->manager->layout($key);
-        $layout->lastUsed = $data['name'];
-
-        $this->manager->save($key, $layout);
+        $this->manager->recordUse($key, $data['name']);
 
         return response()->noContent();
     }

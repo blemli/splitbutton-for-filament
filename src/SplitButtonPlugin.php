@@ -2,6 +2,7 @@
 
 namespace Blemli\SplitButton;
 
+use Blemli\SplitButton\Enums\AutoPin;
 use Blemli\SplitButton\Http\Controllers\LayoutController;
 use Closure;
 use Filament\Contracts\Plugin;
@@ -21,17 +22,26 @@ class SplitButtonPlugin implements Plugin
 
     protected bool | Closure $isEditable = false;
 
-    protected bool | Closure $hasEditHint = false;
+    protected bool | Closure $isEditableWithMenuEntry = true;
 
-    protected bool | Closure $remembersLastUsed = false;
+    protected bool | Closure $isEditableWithLongPress = false;
 
-    protected bool $remembersLastUsedByDefault = false;
+    protected bool | Closure $isEditableWithKeyboard = true;
+
+    /** @var AutoPin | string | array<AutoPin | string> | bool | Closure */
+    protected AutoPin | string | array | bool | Closure $autoPin = false;
+
+    protected AutoPin | string | bool $autoPinByDefault = false;
+
+    protected bool $isAutoPinOptional = false;
+
+    protected ?float $frecencyHalfLife = null;
 
     protected bool | Closure $hasFormSettingsPresets = false;
 
     protected bool | string | Closure $authorization = true;
 
-    protected ?int $longPress = null;
+    protected ?int $longPressDelay = null;
 
     public function getId(): string
     {
@@ -50,9 +60,9 @@ class SplitButtonPlugin implements Plugin
     }
 
     /**
-     * Let users rearrange every split button: a long press on the menu (or
-     * E on the keyboard) enters edit mode to reorder, hide, pick the
-     * default and reset.
+     * Let users rearrange every split button: the "Customize" entry at the
+     * end of the menu (or E on the keyboard) enters edit mode to reorder,
+     * hide, pick the default and reset.
      */
     public function editable(bool | Closure $condition = true): static
     {
@@ -62,25 +72,82 @@ class SplitButtonPlugin implements Plugin
     }
 
     /**
-     * Show a visible "Customize" entry at the end of editable menus, for
-     * users who would never discover the long press.
+     * The visible "Customize" entry at the end of editable menus: the way
+     * into edit mode everybody finds. On unless you pass false — then make
+     * sure users have another way in (->editableWithLongPress(), or E).
      */
-    public function editHint(bool | Closure $condition = true): static
+    public function editableWithMenuEntry(bool | Closure $condition = true): static
     {
-        $this->hasEditHint = $condition;
+        $this->isEditableWithMenuEntry = $condition;
 
         return $this;
     }
 
     /**
-     * Offer users a "last used on the button" toggle in edit mode: when a
-     * user turns it on, the entry they picked last becomes the button face.
-     * Pass byDefault: true to start with the toggle on.
+     * Also enter edit mode by holding the menu or one of its entries, the
+     * way a phone's home screen is rearranged. Off unless you ask for it.
      */
-    public function rememberLastUsed(bool | Closure $condition = true, bool $byDefault = false): static
+    public function editableWithLongPress(bool | Closure $condition = true): static
     {
-        $this->remembersLastUsed = $condition;
-        $this->remembersLastUsedByDefault = $byDefault;
+        $this->isEditableWithLongPress = $condition;
+
+        return $this;
+    }
+
+    /**
+     * The keyboard shortcuts of edit mode: E to enter it, Ctrl / ⌘ with the
+     * arrows to move, H to hide, D to pin. On unless you pass false, for
+     * panels whose single keys belong to something else (filament-mouseless
+     * badges still reach every control). Arrows, Enter and Escape keep
+     * working either way: those are how a menu is operated, not shortcuts.
+     */
+    public function editableWithKeyboard(bool | Closure $condition = true): static
+    {
+        $this->isEditableWithKeyboard = $condition;
+
+        return $this;
+    }
+
+    /**
+     * Every button follows its user's picks: what they picked last
+     * (Recent), most often (Frequent) or most often lately (Frecent, the
+     * default) sits on the button. A pin a user sets by hand in edit mode
+     * still wins; taking it off hands the button back to the strategy.
+     */
+    public function autoPin(AutoPin | string | bool | Closure $strategy = AutoPin::Frecent): static
+    {
+        $this->autoPin = $strategy;
+        $this->isAutoPinOptional = false;
+        $this->autoPinByDefault = false;
+
+        return $this;
+    }
+
+    /**
+     * Leave it to each user instead: in edit mode they get a switch that
+     * makes the button follow their picks — one per strategy when you
+     * offer several. Nothing changes for a user until they turn one on,
+     * unless byDefault says so: true for the first strategy, or the
+     * strategy itself.
+     *
+     * @param  AutoPin | string | array<AutoPin | string> | bool | Closure  $strategies
+     */
+    public function offerAutoPin(AutoPin | string | array | bool | Closure $strategies = AutoPin::Frecent, AutoPin | string | bool $byDefault = false): static
+    {
+        $this->autoPin = $strategies;
+        $this->isAutoPinOptional = true;
+        $this->autoPinByDefault = $byDefault;
+
+        return $this;
+    }
+
+    /**
+     * How fast old picks fade for AutoPin::Frecent: after this many days a
+     * pick counts half. Short follows the user's week, long their habits.
+     */
+    public function frecencyHalfLife(int | float $days): static
+    {
+        $this->frecencyHalfLife = max(0.01, (float) $days);
 
         return $this;
     }
@@ -110,11 +177,11 @@ class SplitButtonPlugin implements Plugin
     }
 
     /**
-     * Milliseconds the menu must be pressed to enter edit mode.
+     * Milliseconds the menu must be held for ->editableWithLongPress().
      */
-    public function longPress(int $milliseconds): static
+    public function longPressDelay(int $milliseconds): static
     {
-        $this->longPress = max(150, $milliseconds);
+        $this->longPressDelay = max(150, $milliseconds);
 
         return $this;
     }
@@ -129,19 +196,45 @@ class SplitButtonPlugin implements Plugin
         return $this->evaluate($this->isEditable);
     }
 
-    public function hasEditHint(): bool
+    public function isEditableWithMenuEntry(): bool
     {
-        return $this->evaluate($this->hasEditHint);
+        return $this->evaluate($this->isEditableWithMenuEntry);
     }
 
-    public function remembersLastUsed(): bool
+    public function isEditableWithLongPress(): bool
     {
-        return $this->evaluate($this->remembersLastUsed);
+        return $this->evaluate($this->isEditableWithLongPress);
     }
 
-    public function remembersLastUsedByDefault(): bool
+    public function isEditableWithKeyboard(): bool
     {
-        return $this->remembersLastUsedByDefault;
+        return $this->evaluate($this->isEditableWithKeyboard);
+    }
+
+    /**
+     * @return array<AutoPin>
+     */
+    public function getAutoPinStrategies(): array
+    {
+        return AutoPin::list($this->autoPin instanceof Closure ? ($this->autoPin)() : $this->autoPin);
+    }
+
+    public function isAutoPinOptional(): bool
+    {
+        return $this->isAutoPinOptional;
+    }
+
+    public function getAutoPinByDefault(): AutoPin | string | bool
+    {
+        return $this->autoPinByDefault;
+    }
+
+    /**
+     * In days.
+     */
+    public function getFrecencyHalfLife(): float
+    {
+        return $this->frecencyHalfLife ?? max(0.01, (float) config('splitbutton-for-filament.frecency_half_life', 14));
     }
 
     public function hasFormSettingsPresets(): bool
@@ -149,9 +242,9 @@ class SplitButtonPlugin implements Plugin
         return $this->evaluate($this->hasFormSettingsPresets);
     }
 
-    public function getLongPress(): int
+    public function getLongPressDelay(): int
     {
-        return $this->longPress ?? max(150, (int) config('splitbutton-for-filament.long_press', 500));
+        return $this->longPressDelay ?? max(150, (int) config('splitbutton-for-filament.long_press_delay', 500));
     }
 
     public function isAuthorized(): bool

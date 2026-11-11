@@ -15,7 +15,7 @@
     display: flex;
 }
 
-.fi-splitbutton-trigger-start > .fi-splitbutton-dropdown {
+.fi-splitbutton-chevron-start > .fi-splitbutton-dropdown {
     order: -1;
 }
 
@@ -43,31 +43,31 @@
     padding-inline: 0.5rem;
 }
 
-.fi-splitbutton-split:not(.fi-splitbutton-trigger-start) > .fi-btn {
+.fi-splitbutton-split:not(.fi-splitbutton-chevron-start) > .fi-btn {
     border-start-end-radius: 0;
     border-end-end-radius: 0;
 }
 
-.fi-splitbutton-split:not(.fi-splitbutton-trigger-start) > .fi-splitbutton-dropdown > .fi-dropdown-trigger > .fi-btn {
+.fi-splitbutton-split:not(.fi-splitbutton-chevron-start) > .fi-splitbutton-dropdown > .fi-dropdown-trigger > .fi-btn {
     margin-inline-start: 1px;
     border-start-start-radius: 0;
     border-end-start-radius: 0;
 }
 
-.fi-splitbutton-split.fi-splitbutton-trigger-start > .fi-btn {
+.fi-splitbutton-split.fi-splitbutton-chevron-start > .fi-btn {
     border-start-start-radius: 0;
     border-end-start-radius: 0;
 }
 
-.fi-splitbutton-split.fi-splitbutton-trigger-start > .fi-splitbutton-dropdown > .fi-dropdown-trigger > .fi-btn {
+.fi-splitbutton-split.fi-splitbutton-chevron-start > .fi-splitbutton-dropdown > .fi-dropdown-trigger > .fi-btn {
     margin-inline-end: 1px;
     border-start-end-radius: 0;
     border-end-end-radius: 0;
 }
 
 /* A long press must not select text or raise the touch callout. */
-.fi-splitbutton-editable .fi-dropdown-trigger,
-.fi-splitbutton-editable .fi-dropdown-list-item {
+.fi-splitbutton-longpress .fi-dropdown-trigger,
+.fi-splitbutton-longpress .fi-dropdown-list-item {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
@@ -154,6 +154,14 @@
 
 .fi-splitbutton-check .fi-icon {
     color: inherit;
+}
+
+/* a strategy's label says a whole sentence: let it wrap rather than cut it */
+.fi-splitbutton-strategy .fi-dropdown-list-item-label {
+    overflow: visible;
+    text-align: start;
+    text-overflow: clip;
+    white-space: normal;
 }
 
 .fi-splitbutton-keys {

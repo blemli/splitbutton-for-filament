@@ -12,6 +12,7 @@ use Blemli\SplitButton\Tests\Fixtures\SchemaHost;
 use Blemli\SplitButton\Tests\Fixtures\SplitHost;
 use Blemli\SplitButton\Tests\Fixtures\TestPage;
 use Blemli\SplitButton\Tests\Fixtures\User;
+use Blemli\SplitButton\Tests\Fixtures\UserResource\ListUsers;
 use Blemli\SplitButton\Tests\Fixtures\UsersTable;
 use Filament\Actions\ActionsServiceProvider;
 use Filament\Facades\Filament;
@@ -38,6 +39,7 @@ class TestCase extends Orchestra
         parent::setUp();
 
         TestPage::$headerActions = null;
+        ListUsers::$headerActions = null;
         UsersTable::$recordActions = null;
         UsersTable::$headerActions = null;
         UsersTable::$toolbarActions = null;

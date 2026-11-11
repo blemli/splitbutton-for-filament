@@ -6,6 +6,7 @@ use Blemli\SplitButton\Storage\DatabaseStore;
 use Blemli\SplitButton\Storage\LayoutStore;
 use Blemli\SplitButton\Storage\SessionStore;
 use Filament\Facades\Filament;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Throwable;
 
 /**
@@ -53,6 +54,18 @@ class SplitButtonManager
         return (bool) $this->plugin()?->isAuthorized();
     }
 
+    /**
+     * The panel's signed-in user.
+     */
+    public function user(): ?Authenticatable
+    {
+        try {
+            return Filament::auth()->user();
+        } catch (Throwable) {
+            return auth()->user();
+        }
+    }
+
     public function store(): LayoutStore
     {
         return $this->plugin()?->isPersistent()
@@ -79,6 +92,27 @@ class SplitButtonManager
         $this->store()->forget($key);
 
         $this->layouts[$key] = new Layout;
+    }
+
+    /**
+     * Count one pick of an entry of a button.
+     */
+    public function recordUse(string $key, string $name): void
+    {
+        $layout = $this->layout($key);
+        $layout->recordUse($name, now()->getTimestamp(), $this->halfLife());
+
+        $this->save($key, $layout);
+    }
+
+    /**
+     * Seconds after which a pick counts half for "most used lately".
+     */
+    public function halfLife(): float
+    {
+        $days = $this->plugin()?->getFrecencyHalfLife() ?? max(0.01, (float) config('splitbutton-for-filament.frecency_half_life', 14));
+
+        return $days * 86400;
     }
 
     public function forgetCached(?string $key = null): void

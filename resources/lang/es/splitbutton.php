@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'more' => 'Más',
+    'options' => 'Más opciones',
+    'customize' => 'Personalizar',
+    'customize_tooltip' => 'Pulsa E para personalizar',
+    'customize_tooltip_hold' => 'Mantén pulsado, o pulsa E, para personalizar',
+    'customize_tooltip_hold_only' => 'Mantén pulsado para personalizar',
+    'editing' => 'Personalizar menú',
+    'move' => 'Mover',
+    'show' => 'Mostrar',
+    'hide' => 'Ocultar',
+    'set_default' => 'Poner en el botón',
+    'unset_default' => 'Quitar del botón',
+    'pin_recent' => 'Lo último usado en el botón',
+    'pin_frequent' => 'Lo más usado en el botón',
+    'pin_frecent' => 'Lo más usado últimamente en el botón',
+    'reset' => 'Restablecer',
+    'workflow_confirm' => '¿Ejecutar «:name»?',
+    'workflow_run' => 'Ejecutar',
+    'done' => 'Listo',
+    'keys' => '↑↓ elegir · :mod ↑↓ mover · H ocultar · D predeterminado · Esc listo',
+    'key_ctrl' => 'Ctrl',
+];

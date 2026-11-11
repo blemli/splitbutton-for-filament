@@ -1,6 +1,6 @@
 <?php
 
-use Blemli\SplitButton\Enums\TriggerPosition;
+use Blemli\SplitButton\Enums\ChevronPosition;
 use Blemli\SplitButton\SplitButton;
 use Blemli\SplitButton\Tests\Fixtures\TestPage;
 use Filament\Actions\Action;
@@ -242,12 +242,12 @@ it('drops unauthorized actions only when asked to', function () {
     expect(names($filtered['sections'][0]))->toBe(['archive']);
 });
 
-it('resolves the trigger position from the fluent call, then the config', function () {
-    expect(SplitButton::make([])->getTriggerPosition())->toBe(TriggerPosition::End)
-        ->and(SplitButton::make([])->triggerPosition('start')->getTriggerPosition())->toBe(TriggerPosition::Start)
-        ->and(SplitButton::make([])->triggerPosition(TriggerPosition::Start)->getTriggerPosition())->toBe(TriggerPosition::Start);
+it('resolves the chevron position from the fluent call, then the config', function () {
+    expect(SplitButton::make([])->getChevronPosition())->toBe(ChevronPosition::End)
+        ->and(SplitButton::make([])->chevronPosition('start')->getChevronPosition())->toBe(ChevronPosition::Start)
+        ->and(SplitButton::make([])->chevronPosition(ChevronPosition::Start)->getChevronPosition())->toBe(ChevronPosition::Start);
 
-    config()->set('splitbutton-for-filament.trigger_position', 'start');
+    config()->set('splitbutton-for-filament.chevron_position', 'start');
 
-    expect(SplitButton::make([])->getTriggerPosition())->toBe(TriggerPosition::Start);
+    expect(SplitButton::make([])->getChevronPosition())->toBe(ChevronPosition::Start);
 });
