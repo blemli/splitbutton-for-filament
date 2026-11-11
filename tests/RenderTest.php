@@ -211,3 +211,20 @@ it('takes a dropdown width as an enum or as its string', function () {
         ->and(SplitButton::make($actions())->dropdownWidth('my-own-class')->toHtml())->toContain('my-own-class')
         ->and(SplitButton::make($actions())->toHtml())->not->toContain('fi-width-');
 });
+
+it('opens the menu under the control, on the side its trigger is on', function () {
+    $this->signIn();
+    $actions = fn (): array => [Action::make('a')->label('Alpha'), Action::make('b')->label('Beta'), Action::make('c')->label('Gamma')];
+
+    expect(SplitButton::make($actions())->getDropdownPlacement())->toBe('bottom-end')
+        ->and(SplitButton::make($actions())->triggerPosition('start')->getDropdownPlacement())->toBe('bottom-start')
+        ->and(SplitButton::make($actions())->triggerPosition('start')->dropdownPlacement('top-end')->getDropdownPlacement())->toBe('top-end')
+        // a table may place the menu of a "More" trigger, never the chevron of a split button
+        ->and(SplitButton::make($actions())->overflow(1)->defaultDropdownPlacement('bottom-start')->getDropdownPlacement())->toBe('bottom-start')
+        ->and(SplitButton::make($actions())->defaultDropdownPlacement('bottom-start')->getDropdownPlacement())->toBe('bottom-end');
+
+    // Filament gives page-header groups "bottom-end" when they have no placement of their own
+    TestPage::$headerActions = fn (): array => [SplitButton::make($actions())->triggerPosition('start')];
+
+    Livewire::test(TestPage::class)->assertSeeHtml('x-float.placement.bottom-start');
+});

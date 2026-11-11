@@ -249,6 +249,32 @@ class SplitButton extends ActionGroup
             : (TriggerPosition::tryFrom((string) $position) ?? TriggerPosition::End);
     }
 
+    /**
+     * The menu opens under the control, along the edge its trigger is on:
+     * bottom-end with the trigger at the end, bottom-start with it at the
+     * start (both follow the reading direction). Answering here, rather
+     * than in the view, keeps Filament from forcing its own page-header
+     * default onto a trigger that sits at the start. An explicit
+     * ->dropdownPlacement() always wins.
+     */
+    public function getDropdownPlacement(): ?string
+    {
+        $explicit = $this->evaluate($this->dropdownPlacement);
+
+        if (filled($explicit)) {
+            return $explicit;
+        }
+
+        $own = $this->getTriggerPosition() === TriggerPosition::Start ? 'bottom-start' : 'bottom-end';
+
+        // A "More" trigger stands on its own, so a table may still say where
+        // its menus open; the chevron of a split button may not be pulled
+        // away from the button it is joined to.
+        return $this->isOverflow
+            ? ($this->evaluate($this->defaultDropdownPlacement) ?? $own)
+            : $own;
+    }
+
     public function shouldFilterUnauthorized(): bool
     {
         return (bool) ($this->evaluate($this->shouldFilterUnauthorized) ?? config('splitbutton-for-filament.filter_unauthorized', false));

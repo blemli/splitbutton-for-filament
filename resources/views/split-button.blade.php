@@ -24,7 +24,7 @@
     if (is_string($width)) {
         $width = Width::tryFrom($width) ?? $width;
     }
-    $placement = $group->getDropdownPlacement() ?? ($triggerFirst ? 'bottom-start' : 'bottom-end');
+    $placement = $group->getDropdownPlacement();
     $lang = 'splitbutton-for-filament::splitbutton.';
 @endphp
 
