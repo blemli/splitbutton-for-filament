@@ -43,7 +43,8 @@ SplitButton::make([CreateAction::make(), Action::make('import')])   // first act
     ->filterUnauthorized();      // … drop unauthorized entries instead of disabling them
 ```
 
-## Limits
+<details>
+<summary><h2>Limits</h2></summary>
 
 - **Can't use it in field actions** (`->suffixAction()`, `->hintAction()`, …): Filament takes single actions there.
 - **Can't use in notifications**: Filament rebuilds their actions from arrays
@@ -54,11 +55,10 @@ SplitButton::make([CreateAction::make(), Action::make('import')])   // first act
 - **Entries are remembered by action name**: rename an action and users lose its place, unless you tell the button with `->renamed(['old' => 'new'])`. Give closure entries stable names (`template-{id}`).
 - **formsettings presets** need formsettings-for-filament 0.5+ with `->presets()`. Edit presets need a record, and create and edit forms keep separate presets unless formsettings runs `->perResource()`.
 
+</details>
+
 <details>
 <summary><h2>Advanced Usage</h2></summary>
-
-
-
 
 ### Records as entries
 
@@ -181,6 +181,9 @@ php artisan splitbutton:uninstall
 
 </details>
 
-## License
+<details>
+<summary><h2>License</h2></summary>
 
 [Unlicense](LICENSE.md): public domain, do what you like.
+
+</details>
