@@ -2,13 +2,11 @@
 
 <p class="filament-hidden">The button that adapts to how you work.</p>
 
-<img class="filament-hidden" src="https://raw.githubusercontent.com/blemli/splitbutton-for-filament/main/art/banner.jpg" alt="splitbutton" />
-
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/blemli/splitbutton-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/splitbutton-for-filament) [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/blemli/splitbutton-for-filament/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/blemli/splitbutton-for-filament/actions?query=workflow%3Atests+branch%3Amain) [![Total Downloads](https://img.shields.io/packagist/dt/blemli/splitbutton-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/splitbutton-for-filament)
 
-A Filament action button joined to a menu of its variants. It is an `ActionGroup` of real actions, so it goes wherever Filament takes one, and each user can make the menu their own: reorder, hide, choose what sits on the button. [filament-action-overflow](https://github.com/harvirsidhu/filament-action-overflow) composes a static split or "More" row; this adds the per-user layer and covers that composition too.
+A Filament action button joined to a menu of its variants. It is an `ActionGroup` of real actions, so it goes wherever Filament takes one, and each user can make the menu their own: reorder, hide, choose what sits on the button.
 
-![splitbutton](https://raw.githubusercontent.com/blemli/splitbutton-for-filament/main/art/screenshot.png)
+<img class="filament-hidden" src="https://raw.githubusercontent.com/blemli/splitbutton-for-filament/main/art/banner.jpg" alt="splitbutton: a button joined to its menu, and the menu each user arranges" />
 
 ## Installation
 
