@@ -4,19 +4,25 @@
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/blemli/splitbutton-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/splitbutton-for-filament) [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/blemli/splitbutton-for-filament/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/blemli/splitbutton-for-filament/actions?query=workflow%3Atests+branch%3Amain) [![Total Downloads](https://img.shields.io/packagist/dt/blemli/splitbutton-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/splitbutton-for-filament)
 
-One button for the thing you do most, with its variants one click away: **New order ▾** opens *From a quote*, *Repeat last order*, *Import from CSV*. Entries can be fixed, come from a closure (say, the three most used templates), or be the form presets a user marked as quick create.
+Lets your Action Buttons have Options and lets your users customize those Options.
 
-Each user then makes the menu their own. A long press on it (or `E`) lets them reorder the entries, hide the ones they never use, and choose which one sits on the button itself; if you allow it, the entry they picked last moves there on its own. Their layout follows them to every device, or stays in the session if you would rather not add a table.
+<img class="filament-hidden" src="art/banner.jpg" alt="splitbutton: a button joined to its menu, and the menu each user arranges" />
 
-Every entry is an ordinary Filament action inside an `ActionGroup`, so modals, forms, authorization, URLs and key bindings work as they always do, in page headers, tables and forms. The same class also draws the plain "two buttons and a More menu" row.
+> [!IMPORTANT]
+>
+> PRs, Issues and Agents are welcome 🤗. Let's make this package very nice together 
 
-<img class="filament-hidden" src="https://raw.githubusercontent.com/blemli/splitbutton-for-filament/main/art/banner.jpg" alt="splitbutton: a button joined to its menu, and the menu each user arranges" />
+
+
+## Features
+
+users rearrange the menu by long press · drag to reorder · hide entries · pin any entry onto the button · last used moves onto the button · one-tap reset · same menu on every device with `->persist()` · entries from a closure, e.g. your 3 most used templates · compatible with [formsettings](https://github.com/blemli/formsettings-for-filament): quick create / quick edit presets as entries ·  works with [filament-mouseless](https://github.com/blemli/filament-mouseless) · overflow mode: a few buttons + "More" · menu sections · every entry a real Filament action (modals, forms, URLs, key bindings) · page headers & table rows · chevron takes colour, size & outline of its button · trigger at start or end · collapses to a plain button when there is nothing to choose · optional "Customize" hint entry · adjustable long-press time · `->split()` & `->overflow()` macros · everything opt-in · panel-wide defaults, per-button overrides · no script loaded for static buttons · stateless mode without migrations · supports filament-shield permissions · Filament Native Style · dark mode · translated to en, de · Filament 4 & 5  · no extra dependencies · headless install with `--no-interaction` · uninstall with `splitbutton:uninstall`
 
 ## Installation
 
 ```bash
 composer require blemli/splitbutton-for-filament
-php artisan splitbutton-for-filament:install -n   # add --run-migrations for ->persist(); remove with splitbutton:uninstall
+php artisan splitbutton-for-filament:install 
 ```
 
 ## Usage
@@ -40,4 +46,4 @@ Also `CreateAction::make()->split([...])` and `ActionGroup::make([...])->split()
 
 ## License
 
-MIT © [blemli](https://github.com/blemli)
+[Unlicense](LICENSE.md): public domain, do what you like.
