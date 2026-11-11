@@ -1,0 +1,176 @@
+/* Plain CSS on purpose: no Tailwind utilities, so it needs no theme build
+   and cannot override a host theme's variants. */
+
+.fi-splitbutton {
+    display: inline-flex;
+    align-items: stretch;
+    vertical-align: middle;
+}
+
+.fi-splitbutton > .fi-splitbutton-dropdown {
+    display: flex;
+}
+
+.fi-splitbutton > .fi-splitbutton-dropdown > .fi-dropdown-trigger {
+    display: flex;
+}
+
+.fi-splitbutton-trigger-start > .fi-splitbutton-dropdown {
+    order: -1;
+}
+
+/* Overflow: a row of buttons with "More" standing apart. */
+.fi-splitbutton-overflow {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Split: one control. The halves share a one pixel seam, the way
+   Filament's own button group draws it. */
+.fi-splitbutton-split > .fi-btn,
+.fi-splitbutton-split > .fi-splitbutton-dropdown > .fi-dropdown-trigger > .fi-btn {
+    position: relative;
+}
+
+.fi-splitbutton-split > .fi-btn:focus-visible,
+.fi-splitbutton-split > .fi-splitbutton-dropdown > .fi-dropdown-trigger > .fi-btn:focus-visible {
+    z-index: 1;
+}
+
+.fi-splitbutton-split > .fi-splitbutton-dropdown > .fi-dropdown-trigger > .fi-btn {
+    height: 100%;
+    padding-inline: 0.5rem;
+}
+
+.fi-splitbutton-split:not(.fi-splitbutton-trigger-start) > .fi-btn {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.fi-splitbutton-split:not(.fi-splitbutton-trigger-start) > .fi-splitbutton-dropdown > .fi-dropdown-trigger > .fi-btn {
+    margin-inline-start: 1px;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.fi-splitbutton-split.fi-splitbutton-trigger-start > .fi-btn {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.fi-splitbutton-split.fi-splitbutton-trigger-start > .fi-splitbutton-dropdown > .fi-dropdown-trigger > .fi-btn {
+    margin-inline-end: 1px;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+/* A long press must not select text or raise the touch callout. */
+.fi-splitbutton-editable .fi-dropdown-trigger,
+.fi-splitbutton-editable .fi-dropdown-list-item {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Edit mode */
+.fi-splitbutton-edit-header {
+    padding-block: 0.5rem;
+}
+
+.fi-splitbutton-edit-row {
+    cursor: default;
+}
+
+.fi-splitbutton-edit-row:focus {
+    background-color: rgb(0 0 0 / 0.04);
+}
+
+.dark .fi-splitbutton-edit-row:focus {
+    background-color: rgb(255 255 255 / 0.05);
+}
+
+.fi-splitbutton-edit-row.fi-sortable-ghost {
+    opacity: 0.4;
+}
+
+.fi-splitbutton-row-hidden .fi-dropdown-list-item-label {
+    opacity: 0.45;
+    text-decoration: line-through;
+}
+
+.fi-splitbutton-edit-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 0.125rem;
+    border-radius: 0.375rem;
+    color: var(--gray-400);
+    transition: color 75ms;
+}
+
+.fi-splitbutton-edit-btn:hover,
+.fi-splitbutton-edit-btn:focus-visible {
+    color: var(--gray-700);
+}
+
+.dark .fi-splitbutton-edit-btn {
+    color: var(--gray-500);
+}
+
+.dark .fi-splitbutton-edit-btn:hover,
+.dark .fi-splitbutton-edit-btn:focus-visible {
+    color: var(--gray-200);
+}
+
+.fi-splitbutton-edit-btn .fi-icon {
+    color: inherit;
+}
+
+.fi-splitbutton-handle {
+    cursor: grab;
+    touch-action: none;
+}
+
+.fi-splitbutton-handle:active {
+    cursor: grabbing;
+}
+
+.fi-splitbutton-row-face .fi-splitbutton-pin,
+.dark .fi-splitbutton-row-face .fi-splitbutton-pin {
+    color: var(--primary-500);
+}
+
+.fi-splitbutton-check {
+    display: inline-flex;
+    visibility: hidden;
+    color: var(--primary-500);
+}
+
+.fi-splitbutton-check.fi-splitbutton-checked {
+    visibility: visible;
+}
+
+.fi-splitbutton-check .fi-icon {
+    color: inherit;
+}
+
+.fi-splitbutton-keys {
+    padding: 0.25rem 0.5rem 0.375rem;
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    white-space: normal;
+    color: var(--gray-400);
+}
+
+.dark .fi-splitbutton-keys {
+    color: var(--gray-500);
+}
+
+/* The key legend is for people with a keyboard. */
+@media (hover: none) {
+    .fi-splitbutton-keys {
+        display: none;
+    }
+}

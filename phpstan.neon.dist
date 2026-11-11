@@ -1,0 +1,20 @@
+includes:
+    - phpstan-baseline.neon
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 4
+    # The CI matrix spans Filament ^4.0|^5.0 — some ignores only match on
+    # one major, which must not fail the other.
+    reportUnmatchedIgnoredErrors: false
+    paths:
+        - src
+        - config
+    tmpDir: build/phpstan
+    checkOctaneCompatibility: true
+    checkModelProperties: true
+    ignoreErrors:
+        # Macro closures are Closure::bind()-ed to the Action/ActionGroup
+        # instance at runtime; PHPStan sees the service provider as $this.
+        - identifier: varTag.nativeType
+          path: src/SplitButtonServiceProvider.php

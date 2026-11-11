@@ -1,0 +1,259 @@
+@php
+    use Blemli\SplitButton\Enums\TriggerPosition;
+    use Blemli\SplitButton\SplitButtonServiceProvider;
+    use Filament\Support\Enums\Width;
+    use Filament\Support\Facades\FilamentAsset;
+
+    use function Filament\Support\generate_icon_html;
+
+    /** @var \Blemli\SplitButton\SplitButton $group */
+    $composition = $group->compose();
+    $faces = $composition['faces'];
+    $sections = $composition['sections'];
+    $hasTrigger = $composition['hasTrigger'];
+
+    $isOverflow = $group->isOverflow();
+    $isStateful = $hasTrigger && $group->isStateful();
+    $isEditable = $isStateful && $group->isEditable();
+    $triggerFirst = $group->getTriggerPosition() === TriggerPosition::Start;
+
+    $maxHeight = $group->getDropdownMaxHeight();
+    $width = $group->getDropdownWidth();
+    $placement = $group->getDropdownPlacement() ?? ($triggerFirst ? 'bottom-start' : 'bottom-end');
+    $lang = 'splitbutton-for-filament::splitbutton.';
+@endphp
+
+@if ($hasTrigger)
+    <div
+        @if ($isStateful)
+            x-load
+            x-load-src="{{ FilamentAsset::getAlpineComponentSrc('splitbutton', SplitButtonServiceProvider::ASSET_PACKAGE) }}"
+            x-data="splitButton()"
+            data-splitbutton="{{ json_encode($group->getClientState()) }}"
+        @endif
+        @class([
+            'fi-splitbutton',
+            'fi-splitbutton-split' => ! $isOverflow,
+            'fi-splitbutton-overflow' => $isOverflow,
+            'fi-splitbutton-trigger-start' => $triggerFirst,
+            'fi-splitbutton-editable' => $isEditable,
+        ])
+    >
+        @foreach ($faces as $face)
+            {!! $face->toHtml() !!}
+        @endforeach
+
+        <div
+            x-data="filamentDropdown"
+            {{ $group->getExtraDropdownAttributeBag()->class(['fi-dropdown fi-splitbutton-dropdown']) }}
+        >
+            <div
+                @if ($isStateful)
+                    x-on:mousedown="if ($event.button === 0 && ! suppressClick) toggle($event)"
+                    x-bind="surface"
+                @else
+                    x-on:mousedown="if ($event.button === 0) toggle($event)"
+                @endif
+                {{-- Filament 4's dropdown has no keyboard layer of its own. --}}
+                x-on:keyup.enter="typeof handleTriggerKeydown === 'undefined' && toggle($event)"
+                x-on:keyup.space="typeof handleTriggerKeydown === 'undefined' && toggle($event)"
+                @if ($isEditable)
+                    title="{{ __($lang . 'customize_tooltip') }}"
+                    aria-keyshortcuts="E"
+                @endif
+                class="fi-dropdown-trigger"
+            >
+                {!! $group->toTriggerHtml() !!}
+            </div>
+
+            <div
+                x-cloak
+                x-float.placement.{{ $placement }}{{ $group->hasDropdownFlip() ? '.flip' : '' }}{{ $group->hasDropdownTeleport() ? '.teleport' : '' }}.offset="{ offset: {{ $group->getDropdownOffset() ?? 8 }} }"
+                x-ref="panel"
+                x-transition:enter-start="fi-opacity-0"
+                x-transition:leave-end="fi-opacity-0"
+                role="menu"
+                @if ($isStateful)
+                    x-bind="surface"
+                @endif
+                @class([
+                    'fi-dropdown-panel fi-splitbutton-panel',
+                    ($width instanceof Width) ? "fi-width-{$width->value}" : (is_string($width) ? $width : ''),
+                    'fi-scrollable' => $maxHeight,
+                    'fi-splitbutton-editable' => $isEditable,
+                ])
+                @style([
+                    ('max-height: ' . e($maxHeight)) => $maxHeight,
+                ])
+            >
+                @foreach ($sections as $section)
+                    <div
+                        class="fi-dropdown-list"
+                        role="group"
+                        @if ($isEditable) x-show="! editing" @endif
+                    >
+                        @foreach ($section as $entry)
+                            {!! $entry->toHtml() !!}
+                        @endforeach
+                    </div>
+                @endforeach
+
+                @if ($isEditable)
+                    @if ($group->hasEditHint())
+                        <div class="fi-dropdown-list" role="group" x-show="! editing">
+                            <button
+                                type="button"
+                                class="fi-dropdown-list-item fi-splitbutton-hint"
+                                x-on:click.stop="startEditing()"
+                            >
+                                {{ generate_icon_html('heroicon-m-adjustments-horizontal') }}
+
+                                <span class="fi-dropdown-list-item-label">
+                                    {{ __($lang . 'customize') }}
+                                </span>
+                            </button>
+                        </div>
+                    @endif
+
+                    <template x-if="editing">
+                        <div class="fi-dropdown-header fi-splitbutton-edit-header">
+                            {{ generate_icon_html('heroicon-m-adjustments-horizontal') }}
+
+                            <span>{{ __($lang . 'editing') }}</span>
+                        </div>
+                    </template>
+
+                    <template
+                        x-for="(section, sectionIndex) in (editing ? sections : [])"
+                        x-bind:key="sectionIndex"
+                    >
+                        <div
+                            class="fi-dropdown-list fi-splitbutton-edit-list"
+                            role="listbox"
+                            aria-label="{{ __($lang . 'editing') }}"
+                            x-sortable
+                            x-on:end.stop="reorder(sectionIndex, $event.target.sortable.toArray())"
+                            data-sortable-animation-duration="150"
+                        >
+                            <template x-for="item in section" x-bind:key="item.name">
+                                <div
+                                    class="fi-dropdown-list-item fi-splitbutton-edit-row"
+                                    role="option"
+                                    tabindex="-1"
+                                    x-bind:x-sortable-item="item.name"
+                                    x-bind:data-name="item.name"
+                                    x-bind:aria-selected="isFace(item.name) || isPinned(item.name)"
+                                    x-bind:class="{ 'fi-splitbutton-row-hidden': item.hidden, 'fi-splitbutton-row-face': isFace(item.name) || isPinned(item.name) }"
+                                >
+                                    <button
+                                        type="button"
+                                        tabindex="-1"
+                                        x-sortable-handle
+                                        class="fi-splitbutton-edit-btn fi-splitbutton-handle"
+                                        aria-label="{{ __($lang . 'move') }}"
+                                        title="{{ __($lang . 'move') }}"
+                                    >
+                                        {{ generate_icon_html('heroicon-m-bars-2') }}
+                                    </button>
+
+                                    <span class="fi-dropdown-list-item-label" x-text="item.label"></span>
+
+                                    <button
+                                        type="button"
+                                        tabindex="-1"
+                                        class="fi-splitbutton-edit-btn fi-splitbutton-pin"
+                                        x-show="item.pinnable"
+                                        x-on:click.stop="togglePin(item.name)"
+                                        x-bind:aria-pressed="isPinned(item.name)"
+                                        x-bind:aria-label="isPinned(item.name) ? @js(__($lang . 'unset_default')) : @js(__($lang . 'set_default'))"
+                                        x-bind:title="isPinned(item.name) ? @js(__($lang . 'unset_default')) : @js(__($lang . 'set_default'))"
+                                    >
+                                        <span x-show="! (isFace(item.name) || isPinned(item.name))">
+                                            {{ generate_icon_html('heroicon-o-star') }}
+                                        </span>
+
+                                        <span x-show="isFace(item.name) || isPinned(item.name)" x-cloak>
+                                            {{ generate_icon_html('heroicon-s-star') }}
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        tabindex="-1"
+                                        class="fi-splitbutton-edit-btn fi-splitbutton-eye"
+                                        x-on:click.stop="toggleHidden(item.name)"
+                                        x-bind:aria-pressed="item.hidden"
+                                        x-bind:aria-label="item.hidden ? @js(__($lang . 'show')) : @js(__($lang . 'hide'))"
+                                        x-bind:title="item.hidden ? @js(__($lang . 'show')) : @js(__($lang . 'hide'))"
+                                    >
+                                        <span x-show="! item.hidden">
+                                            {{ generate_icon_html('heroicon-m-eye') }}
+                                        </span>
+
+                                        <span x-show="item.hidden" x-cloak>
+                                            {{ generate_icon_html('heroicon-m-eye-slash') }}
+                                        </span>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <template x-if="editing">
+                        <div class="fi-dropdown-list fi-splitbutton-edit-footer" role="group">
+                            @if ($group->remembersLastUsed())
+                                <button
+                                    type="button"
+                                    role="menuitemcheckbox"
+                                    class="fi-dropdown-list-item"
+                                    x-bind:aria-checked="rememberLast"
+                                    x-on:click.stop="toggleRememberLast()"
+                                >
+                                    <span class="fi-splitbutton-check" x-bind:class="{ 'fi-splitbutton-checked': rememberLast }">
+                                        {{ generate_icon_html('heroicon-m-check') }}
+                                    </span>
+
+                                    <span class="fi-dropdown-list-item-label">
+                                        {{ __($lang . 'remember_last') }}
+                                    </span>
+                                </button>
+                            @endif
+
+                            <button
+                                type="button"
+                                class="fi-dropdown-list-item"
+                                x-on:click.stop="reset()"
+                            >
+                                {{ generate_icon_html('heroicon-m-arrow-uturn-left') }}
+
+                                <span class="fi-dropdown-list-item-label">
+                                    {{ __($lang . 'reset') }}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                class="fi-dropdown-list-item"
+                                x-on:click.stop="finish()"
+                            >
+                                {{ generate_icon_html('heroicon-m-check') }}
+
+                                <span class="fi-dropdown-list-item-label">
+                                    {{ __($lang . 'done') }}
+                                </span>
+                            </button>
+
+                            <p class="fi-splitbutton-keys">
+                                {{ __($lang . 'keys') }}
+                            </p>
+                        </div>
+                    </template>
+                @endif
+            </div>
+        </div>
+    </div>
+@else
+    @foreach ($faces as $face)
+        {!! $face->toHtml() !!}
+    @endforeach
+@endif

@@ -1,0 +1,80 @@
+{
+    "name": "blemli/splitbutton-for-filament",
+    "description": "The button that adapts to how you work.",
+    "keywords": [
+        "blemli",
+        "laravel",
+        "filamentphp",
+        "filament",
+        "filament-plugin",
+        "splitbutton",
+        "split-button",
+        "action-group",
+        "dropdown"
+    ],
+    "homepage": "https://github.com/blemli/splitbutton-for-filament",
+    "support": {
+        "issues": "https://github.com/blemli/splitbutton-for-filament/issues",
+        "source": "https://github.com/blemli/splitbutton-for-filament"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "grafst",
+            "email": "grafst@users.noreply.github.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "filament/filament": "^4.0|^5.0",
+        "spatie/laravel-package-tools": "^1.15.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.0",
+        "nunomaduro/collision": "^8.0",
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "pestphp/pest": "^3.7|^4.0",
+        "pestphp/pest-plugin-arch": "^3.0|^4.0",
+        "pestphp/pest-plugin-laravel": "^3.0|^4.0",
+        "pestphp/pest-plugin-livewire": "^3.0|^4.0"
+    },
+    "suggest": {
+        "blemli/formsettings-for-filament": "List form presets marked as quick create / quick edit in the split button (^0.5)."
+    },
+    "autoload": {
+        "psr-4": {
+            "Blemli\\SplitButton\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Blemli\\SplitButton\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
+        "analyse": "phpstan analyse",
+        "lint": "pint",
+        "test": "pest",
+        "test:lint": "pint --test"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Blemli\\SplitButton\\SplitButtonServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true,
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
